@@ -59,8 +59,25 @@ Given the small scope and time limit, some production features were omitted or s
 
 ## How to run in docker
 
+create the zip file:
+
+./mvnw clean package -DskipTests
+
+then build the docker image and run it:
+
 docker build -t url-shortener-app .
 docker run -p 8080:8080 url-shortener-app
+
+or optional:
+
+### Run with Docker and PostgreSQL
+docker run -p 8080:8080 \
+--add-host=host.docker.internal:host-gateway \
+-e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5433/urlshortener \
+-e SPRING_DATASOURCE_USERNAME=your_user \
+-e SPRING_DATASOURCE_PASSWORD=your_password \
+url-shortener-app
+
 
 ### Database Setup
 docker run --name url-shortener-db \
