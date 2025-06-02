@@ -14,12 +14,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class PostgresRepositoryTest {
+class ShortUrlRepositoryAdapterTest {
 
     @Mock
     private JpaShortUrlRepository jpaRepository;
 
-    private PostgresRepository postgresRepository;
+    private ShortUrlRepositoryAdapter shortUrlRepositoryAdapter;
 
     private AutoCloseable closeable;
 
@@ -27,7 +27,7 @@ class PostgresRepositoryTest {
     @BeforeEach
     void setUp() {
         closeable = MockitoAnnotations.openMocks(this);
-        postgresRepository = new PostgresRepository(jpaRepository);
+        shortUrlRepositoryAdapter = new ShortUrlRepositoryAdapter(jpaRepository);
     }
 
     @AfterEach
@@ -48,7 +48,7 @@ class PostgresRepositoryTest {
                 .thenReturn(Optional.of(entity));
 
         // Act
-        var result = postgresRepository.findByOriginalUrl("https://example.com");
+        var result = shortUrlRepositoryAdapter.findByOriginalUrl("https://example.com");
 
         // Assert
         assertTrue(result.isPresent());
@@ -64,7 +64,7 @@ class PostgresRepositoryTest {
         when(jpaRepository.findByOriginalUrl("https://example.com"))
                 .thenReturn(Optional.empty());
 
-        var result = postgresRepository.findByOriginalUrl("https://example.com");
+        var result = shortUrlRepositoryAdapter.findByOriginalUrl("https://example.com");
 
         assertTrue(result.isEmpty());
     }
@@ -83,7 +83,7 @@ class PostgresRepositoryTest {
         });
 
         // Act
-        var result = postgresRepository.save(dtoToSave);
+        var result = shortUrlRepositoryAdapter.save(dtoToSave);
 
         // Assert
         var savedEntity = entityCaptor.getValue();
@@ -102,14 +102,14 @@ class PostgresRepositoryTest {
     @Test
     void incrementRequestCount_ShouldDelegateToJpa() {
         String shortUrl = "short.ly/abc123";
-        postgresRepository.incrementRequestCount(shortUrl);
+        shortUrlRepositoryAdapter.incrementRequestCount(shortUrl);
         verify(jpaRepository).incrementRequestCount(shortUrl);
     }
 
     @Test
     void incrementUsedCount_ShouldDelegateToJpa() {
         String shortUrl = "short.ly/abc123";
-        postgresRepository.incrementUsedCount(shortUrl);
+        shortUrlRepositoryAdapter.incrementUsedCount(shortUrl);
         verify(jpaRepository).incrementUsedCount(shortUrl);
     }
 
@@ -124,7 +124,7 @@ class PostgresRepositoryTest {
         when(jpaRepository.findByShortUrl("short.ly/abc123"))
                 .thenReturn(Optional.of(entity));
 
-        var result = postgresRepository.findByShortUrl("short.ly/abc123");
+        var result = shortUrlRepositoryAdapter.findByShortUrl("short.ly/abc123");
 
         assertTrue(result.isPresent());
         var dto = result.get();
@@ -139,7 +139,7 @@ class PostgresRepositoryTest {
         when(jpaRepository.findByShortUrl("short.ly/abc123"))
                 .thenReturn(Optional.empty());
 
-        var result = postgresRepository.findByShortUrl("short.ly/abc123");
+        var result = shortUrlRepositoryAdapter.findByShortUrl("short.ly/abc123");
 
         assertTrue(result.isEmpty());
     }

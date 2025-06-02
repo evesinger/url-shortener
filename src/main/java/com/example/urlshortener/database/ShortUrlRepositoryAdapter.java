@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class PostgresRepository implements UrlRepository {
+public class ShortUrlRepositoryAdapter implements UrlRepository {
 
     private final JpaShortUrlRepository jpaRepository;
 

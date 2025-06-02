@@ -17,14 +17,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class DatasbaseServiceTest {
+class ShortUrlPersistenceServiceTest {
     @Mock
-    private PostgresRepository repository;
+    private ShortUrlRepositoryAdapter repository;
 
     private AutoCloseable closeable;
 
     @InjectMocks
-    private DatasbaseService datasbaseService;
+    private ShortUrlPersistenceService shortUrlPersistenceService;
 
     @BeforeEach
     void setUp() {
@@ -43,7 +43,7 @@ class DatasbaseServiceTest {
 
         when(repository.findByOriginalUrl(originalUrl)).thenReturn(Optional.of(dto));
 
-        var result = datasbaseService.findByOriginalUrl(originalUrl);
+        var result = shortUrlPersistenceService.findByOriginalUrl(originalUrl);
 
         assertTrue(result.isPresent());
         assertEquals(dto, result.get());
@@ -57,7 +57,7 @@ class DatasbaseServiceTest {
 
         when(repository.findByShortUrl(shortUrl)).thenReturn(Optional.of(dto));
 
-        var result = datasbaseService.findByShortUrl(shortUrl);
+        var result = shortUrlPersistenceService.findByShortUrl(shortUrl);
 
         assertTrue(result.isPresent());
         assertEquals(dto, result.get());
@@ -70,7 +70,7 @@ class DatasbaseServiceTest {
 
         when(repository.save(dto)).thenReturn(dto);
 
-        var result = datasbaseService.save(dto);
+        var result = shortUrlPersistenceService.save(dto);
 
         assertEquals(dto, result);
         verify(repository).save(dto);
@@ -84,7 +84,7 @@ class DatasbaseServiceTest {
         when(repository.findByShortUrl(shortUrl)).thenReturn(Optional.of(dto));
         when(repository.save(dto)).thenReturn(dto);
 
-        datasbaseService.incrementUsedCount(shortUrl);
+        shortUrlPersistenceService.incrementUsedCount(shortUrl);
 
         assertEquals(6, dto.getUsedCount());
         verify(repository).findByShortUrl(shortUrl);
@@ -97,7 +97,7 @@ class DatasbaseServiceTest {
 
         when(repository.findByShortUrl(shortUrl)).thenReturn(Optional.empty());
 
-        datasbaseService.incrementUsedCount(shortUrl);
+        shortUrlPersistenceService.incrementUsedCount(shortUrl);
 
         verify(repository).findByShortUrl(shortUrl);
         verify(repository, never()).save(any());
@@ -109,7 +109,7 @@ class DatasbaseServiceTest {
 
         doNothing().when(repository).incrementRequestCount(originalUrl);
 
-        datasbaseService.incrementRequestCount(originalUrl);
+        shortUrlPersistenceService.incrementRequestCount(originalUrl);
 
         verify(repository).incrementRequestCount(originalUrl);
     }

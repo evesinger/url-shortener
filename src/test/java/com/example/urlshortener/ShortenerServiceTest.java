@@ -1,6 +1,6 @@
 package com.example.urlshortener;
 
-import com.example.urlshortener.database.DatasbaseService;
+import com.example.urlshortener.database.ShortUrlPersistenceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -17,13 +17,13 @@ import static org.mockito.Mockito.when;
 
 class ShortenerServiceTest {
 
-    private DatasbaseService datasbaseService;
+    private ShortUrlPersistenceService shortUrlPersistenceService;
     private ShortenerService shortenerService;
 
     @BeforeEach
     void setUp() {
-        datasbaseService = mock(DatasbaseService.class);
-        shortenerService = new ShortenerService(datasbaseService);
+        shortUrlPersistenceService = mock(ShortUrlPersistenceService.class);
+        shortenerService = new ShortenerService(shortUrlPersistenceService);
     }
 
     @Test
@@ -34,8 +34,8 @@ class ShortenerServiceTest {
         var expectedDto = new ShortUrlDto(expectedShort, originalUrl, 1, 0);
 
         // Simulate first try will work
-        when(datasbaseService.findByShortUrl(anyString())).thenReturn(Optional.empty());
-        when(datasbaseService.save(any())).thenReturn(expectedDto);
+        when(shortUrlPersistenceService.findByShortUrl(anyString())).thenReturn(Optional.empty());
+        when(shortUrlPersistenceService.save(any())).thenReturn(expectedDto);
 
         // Act
         var result = shortenerService.shortenUrl(originalUrl);
@@ -45,7 +45,7 @@ class ShortenerServiceTest {
         assertEquals(expectedDto.getShortUrl(), result.getShortUrl());
         assertEquals(expectedDto.getOriginalUrl(), result.getOriginalUrl());
         assertEquals(1, result.getRequestCount());
-        verify(datasbaseService).save(any());
+        verify(shortUrlPersistenceService).save(any());
     }
 
     @Test
@@ -57,10 +57,10 @@ class ShortenerServiceTest {
 
         // First save call throws, simulating duplicate
         doThrow(new DataIntegrityViolationException("duplicate"))
-                .when(datasbaseService).save(any());
+                .when(shortUrlPersistenceService).save(any());
 
         // When fallback path is triggered
-        when(datasbaseService.findByOriginalUrl(originalUrl))
+        when(shortUrlPersistenceService.findByOriginalUrl(originalUrl))
                 .thenReturn(Optional.of(existingDto));
 
         // Act
@@ -70,15 +70,15 @@ class ShortenerServiceTest {
         assertNotNull(result);
         assertEquals(shortUrl, result.getShortUrl());
         assertEquals(6, result.getRequestCount()); // original was 5 + 1
-        verify(datasbaseService).incrementRequestCount(shortUrl);
+        verify(shortUrlPersistenceService).incrementRequestCount(shortUrl);
     }
 
     @Test
     void shortenUrl_ShouldThrow_WhenDuplicateAndNoExistingFound() {
         // Arrange
         var originalUrl = "https://example.com";
-        when(datasbaseService.save(any())).thenThrow(new DataIntegrityViolationException("duplicate"));
-        when(datasbaseService.findByOriginalUrl(originalUrl)).thenReturn(Optional.empty());
+        when(shortUrlPersistenceService.save(any())).thenThrow(new DataIntegrityViolationException("duplicate"));
+        when(shortUrlPersistenceService.findByOriginalUrl(originalUrl)).thenReturn(Optional.empty());
 
         // Act & Assert
         var exception = assertThrows(RuntimeException.class, () ->
@@ -93,7 +93,7 @@ class ShortenerServiceTest {
         var originalUrl = "https://example.com";
         var dto = new ShortUrlDto(shortUrl, originalUrl, 1, 0);
 
-        when(datasbaseService.findByShortUrl(shortUrl)).thenReturn(Optional.of(dto));
+        when(shortUrlPersistenceService.findByShortUrl(shortUrl)).thenReturn(Optional.of(dto));
 
         var result = shortenerService.getOriginalUrl(shortUrl);
         assertTrue(result.isPresent());
@@ -105,7 +105,7 @@ class ShortenerServiceTest {
         var shortUrl = "short.ly/abc123";
         var dto = new ShortUrlDto(shortUrl, "https://example.com", 2, 5);
 
-        when(datasbaseService.findByShortUrl(shortUrl)).thenReturn(Optional.of(dto));
+        when(shortUrlPersistenceService.findByShortUrl(shortUrl)).thenReturn(Optional.of(dto));
 
         var result = shortenerService.getStatistics(shortUrl);
         assertNotNull(result);
@@ -119,6 +119,6 @@ class ShortenerServiceTest {
 
         shortenerService.incrementUsedCount(shortUrl);
 
-        verify(datasbaseService).incrementUsedCount(shortUrl);
+        verify(shortUrlPersistenceService).incrementUsedCount(shortUrl);
     }
 }

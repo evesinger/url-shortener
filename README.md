@@ -38,6 +38,14 @@ http://localhost:8080/v3/api-docs
 - Handles concurrency via database unique constraints and retry logic. 
 - Includes basic URL format validation.
 
+### Intentional Simplifications
+
+Given the small scope and time limit, some production features were omitted or simplified:
+
+- No event-driven or asynchronous design
+- No rate limiting, caching, or authentication
+- No horizontal scaling or distributed coordination
+
 ## How to install
 
 ./mvnw clean install
