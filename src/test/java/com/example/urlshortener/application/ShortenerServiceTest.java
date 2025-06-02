@@ -1,6 +1,7 @@
-package com.example.urlshortener;
+package com.example.urlshortener.application;
 
-import com.example.urlshortener.database.ShortUrlPersistenceService;
+import com.example.urlshortener.api.ShortUrlDto;
+import com.example.urlshortener.persistence.ShortUrlPersistenceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;

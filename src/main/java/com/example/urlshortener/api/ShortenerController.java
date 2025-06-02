@@ -1,5 +1,6 @@
-package com.example.urlshortener;
+package com.example.urlshortener.api;
 
+import com.example.urlshortener.application.ShortenerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,6 +1,6 @@
-package com.example.urlshortener.database;
+package com.example.urlshortener.persistence;
 
-import com.example.urlshortener.ShortUrlDto;
+import com.example.urlshortener.api.ShortUrlDto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

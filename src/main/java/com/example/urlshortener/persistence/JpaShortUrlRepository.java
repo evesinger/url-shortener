@@ -1,4 +1,4 @@
-package com.example.urlshortener.database;
+package com.example.urlshortener.persistence;
 
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;

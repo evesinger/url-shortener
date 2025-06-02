@@ -1,6 +1,7 @@
-package com.example.urlshortener;
+package com.example.urlshortener.application;
 
-import com.example.urlshortener.database.ShortUrlPersistenceService;
+import com.example.urlshortener.api.ShortUrlDto;
+import com.example.urlshortener.persistence.ShortUrlPersistenceService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;

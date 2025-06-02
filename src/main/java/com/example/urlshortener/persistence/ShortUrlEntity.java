@@ -1,4 +1,4 @@
-package com.example.urlshortener.database;
+package com.example.urlshortener.persistence;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

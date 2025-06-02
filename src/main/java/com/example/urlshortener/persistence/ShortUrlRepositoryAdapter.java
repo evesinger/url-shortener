@@ -1,6 +1,6 @@
-package com.example.urlshortener.database;
+package com.example.urlshortener.persistence;
 
-import com.example.urlshortener.ShortUrlDto;
+import com.example.urlshortener.api.ShortUrlDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

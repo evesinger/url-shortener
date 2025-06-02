@@ -1,5 +1,6 @@
-package com.example.urlshortener;
+package com.example.urlshortener.api;
 
+import com.example.urlshortener.application.ShortenerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
