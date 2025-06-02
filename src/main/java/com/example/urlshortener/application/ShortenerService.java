@@ -94,7 +94,7 @@ public class ShortenerService {
                         .withoutPadding()
                         .encodeToString(hash)
                         .substring(0, 8);
-                shortUrl = baseUrl + encodedUrl;
+                shortUrl = baseUrl + "/" + encodedUrl;
 
                 if (shortUrlPersistenceService.findByShortUrl(shortUrl).isEmpty()) {
                     break; // unique shortUrl found

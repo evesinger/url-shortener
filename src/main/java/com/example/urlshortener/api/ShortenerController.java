@@ -41,7 +41,7 @@ public class ShortenerController {
     @Operation(summary = "Redirect short URL", description = "Redirects to the original long URL")
     @GetMapping("/${shortener.prefix}/{shortCode}")
     public ResponseEntity<Void> redirectToOriginalUrl(@PathVariable String shortCode) {
-        var originalUrl = shortenerService.getOriginalUrl(baseUrl + shortCode);
+        var originalUrl = shortenerService.getOriginalUrl(baseUrl + "/" + shortCode);
 
         if (originalUrl.isEmpty()) {
             log.warn("Short code not found: {}", shortCode);
@@ -56,7 +56,7 @@ public class ShortenerController {
     @Operation(summary = "Get usage stats", description = "Returns statistics for a shortened URL")
     @GetMapping("/stats/${shortener.prefix}/{shortCode}")
     public ResponseEntity<ShortUrlDto> getStatistics(@PathVariable String shortCode) {
-        var stats = shortenerService.getStatistics(baseUrl + shortCode);
+        var stats = shortenerService.getStatistics(baseUrl + "/" + shortCode);
         if (stats == null) {
             return ResponseEntity.notFound().build();
         }
