@@ -22,7 +22,7 @@ public class PostgresRepository implements UrlRepository {
     }
 
     private ShortUrlEntity mapToEntity(ShortUrlDto domain) {
-        ShortUrlEntity entity = new ShortUrlEntity();
+        var entity = new ShortUrlEntity();
         entity.setShortUrl(domain.getShortUrl());
         entity.setOriginalUrl(domain.getOriginalUrl());
         entity.setRequestCount(domain.getRequestCount());
@@ -42,7 +42,7 @@ public class PostgresRepository implements UrlRepository {
 
     @Override
     public ShortUrlDto save(ShortUrlDto shortUrl) {
-        ShortUrlEntity entity = mapToEntity(shortUrl);
+        var entity = mapToEntity(shortUrl);
         entity = jpaRepository.save(entity);
         return mapToDomain(entity);
     }

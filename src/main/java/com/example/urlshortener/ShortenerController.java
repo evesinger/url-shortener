@@ -1,6 +1,13 @@
 package com.example.urlshortener;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import org.hibernate.validator.constraints.URL;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -8,27 +15,35 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @RestController
+@Tag(name = "URL Shortener", description = "Endpoints for shortening and resolving URLs")
 public class ShortenerController {
     private final ShortenerService shortenerService;
+    @Value("${shortener.prefix}")
+    private String baseUrl = "short.ly/";
+    private static final Logger log = LogManager.getLogger(ShortenerController.class);
 
     public ShortenerController(ShortenerService shortenerService) {
         this.shortenerService = shortenerService;
     }
 
+    @Operation(summary = "Shorten a URL", description = "Returns a shortened version of the original URL")
     @PostMapping("/shorten")
-    public ResponseEntity<ShortUrlDto> shortenUrl(@RequestBody RequestBodyDto originalUrl) {
-       ShortUrlDto response = shortenerService.shortenUrl(originalUrl.url);
+    public ResponseEntity<ShortUrlDto> shortenUrl(@RequestBody @Valid RequestBodyDto originalUrl) {
+       var response = shortenerService.shortenUrl(originalUrl.url);
        return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("/short.ly/{shortCode}")
+    @Operation(summary = "Redirect short URL", description = "Redirects to the original long URL")
+    @GetMapping("/${shortener.prefix}/{shortCode}")
     public ResponseEntity<Void> redirectToOriginalUrl(@PathVariable String shortCode) {
-        Optional<String> originalUrl = shortenerService.getOriginalUrl("short.ly/" + shortCode);
+        var originalUrl = shortenerService.getOriginalUrl(baseUrl + shortCode);
 
         if (originalUrl.isEmpty()) {
+            log.warn("Short code not found: {}", shortCode);
             return ResponseEntity.notFound().build();
         }
         shortenerService.incrementUsedCount(shortCode);
@@ -37,17 +52,21 @@ public class ShortenerController {
                 .build();
     }
 
-    @GetMapping("/stats/short.ly/{shortCode}")
+    @Operation(summary = "Get usage stats", description = "Returns statistics for a shortened URL")
+    @GetMapping("/stats/${shortener.prefix}/{shortCode}")
     public ResponseEntity<ShortUrlDto> getStatistics(@PathVariable String shortCode) {
-        ShortUrlDto stats = shortenerService.getStatistics("short.ly/" +shortCode);
+        var stats = shortenerService.getStatistics(baseUrl + shortCode);
         if (stats == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok().body(stats);
     }
 
+    @Schema(description = "Request to shorten a URL")
     @Data
     public static class RequestBodyDto {
+        @NotBlank
+        @URL
         String url;
     }
 }

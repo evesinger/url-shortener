@@ -1,37 +1,56 @@
 package com.example.urlshortener;
 
 import com.example.urlshortener.database.DatasbaseService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Optional;
 
 @Component
 public class ShortenerService {
 
     private final DatasbaseService datasbaseService;
+    @Value("${shortener.prefix}")
+    private String baseUrl = "short.ly/";
+    private static final Logger log = LogManager.getLogger(ShortenerService.class);
 
     public ShortenerService(DatasbaseService datasbaseService) {
         this.datasbaseService = datasbaseService;
+
     }
-    // This class will contain the business logic for URL shortening
-    // It will interact with the database to create short URLs and retrieve original URLs.
 
     public ShortUrlDto shortenUrl(String originalUrl) {
-        // Logic to create a short URL
-        Optional<ShortUrlDto> existingEntry = datasbaseService.findByOriginalUrl(originalUrl);
-
-        if (existingEntry.isPresent()) {
-            datasbaseService.incrementRequestCount(existingEntry.get().getShortUrl()); // Increment request count if URL already exists
-            return new ShortUrlDto(existingEntry.get().getShortUrl(), originalUrl,
-                    existingEntry.get().getRequestCount() + 1, existingEntry.get().getUsedCount());
+        try {
+            // Try to create and save new short URL
+            return createShortUrl(originalUrl);
+        } catch (DataIntegrityViolationException e) {
+            log.info("URL already shortened: {}", originalUrl);
+            // Likely unique constraint violation (URL already shortened)
+            // So fetch the existing entry and increment request count
+            var existingEntryOpt = datasbaseService.findByOriginalUrl(originalUrl);
+            if (existingEntryOpt.isPresent()) {
+                ShortUrlDto existing = existingEntryOpt.get();
+                datasbaseService.incrementRequestCount(existing.getShortUrl());
+                return new ShortUrlDto(
+                        existing.getShortUrl(),
+                        existing.getOriginalUrl(),
+                        existing.getRequestCount() + 1,
+                        existing.getUsedCount());
+            } else {
+                // Very rare case: data integrity exception but no existing record found
+                // Could throw or handle accordingly
+                log.warn("Failed to shorten URL and no existing record found: {}", originalUrl);
+                throw new RuntimeException("Failed to shorten URL and no existing record found", e);
+            }
         }
-        // Here you would typically also save the original URL and short URL mapping in the database
-        // For now, we return a dummy response
-        // unique constraint for shortUrl
-        // unique constraint for originalUrl
-        // insert on conflict
-        return createShortUrl(originalUrl);
     }
+
 
     public void incrementUsedCount(String shortUrl) {
         // Logic to increment the used count for the short URL
@@ -47,21 +66,50 @@ public class ShortenerService {
         return datasbaseService.findByShortUrl(shortUrl).orElse(null);
     }
 
-    // Example method to create a short URL
-    private ShortUrlDto createShortUrl(String originalUrl) {
-        // Logic to generate a unique short URL
-        // Store the mapping in the database
-
-        // Generate a new short URL (this is just a placeholder logic)
-        String shortUrl = "short.ly/" + originalUrl.hashCode(); // Simple hash-based short URL generation
-        ShortUrlDto shortUrlDto = new ShortUrlDto(shortUrl, originalUrl, 1, 0);
-        return datasbaseService.save(shortUrlDto); // Save the new short URL mapping in the database
-    }
-
     public Optional<String> getOriginalUrl(String shortUrl) {
         // Logic to retrieve the original URL from the database using the short URL
         // For now, we return a dummy value
         return datasbaseService.findByShortUrl(shortUrl)
                 .map(ShortUrlDto::getOriginalUrl);
     }
+
+    private static final int MAX_RETRIES = 5;
+
+    private ShortUrlDto createShortUrl(String originalUrl) {
+        try {
+            var digest = MessageDigest.getInstance("SHA-256");
+            String shortUrl;
+            int attempt = 0;
+            String encodedUrl;
+
+            do {
+                var input = (attempt == 0) ? originalUrl : originalUrl + attempt;
+                byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+                encodedUrl = Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(hash)
+                        .substring(0, 8);
+                shortUrl = baseUrl + encodedUrl;
+
+                if (datasbaseService.findByShortUrl(shortUrl).isEmpty()) {
+                    break; // unique shortUrl found
+                }
+                attempt++;
+            } while (attempt < MAX_RETRIES);
+
+            if (attempt == MAX_RETRIES) {
+                log.warn("Failed to generate unique short URL after retries: {}", originalUrl);
+                throw new RuntimeException("Failed to generate unique short URL after retries");
+            }
+
+            var shortUrlDto = new ShortUrlDto(shortUrl, originalUrl, 1, 0);
+            return datasbaseService.save(shortUrlDto);
+        } catch (DataIntegrityViolationException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("Could not generate short code: {}", originalUrl);
+            throw new RuntimeException("Could not generate short code", e);
+        }
+    }
+
 }
