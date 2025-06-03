@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
 public class ShortenerController {
     private final ShortenerService shortenerService;
     @Value("${shortener.prefix}")
-    private String baseUrl = "short.ly/";
+    private String baseUrl = "short.ly";
     private static final Logger log = LogManager.getLogger(ShortenerController.class);
 
     public ShortenerController(ShortenerService shortenerService) {
